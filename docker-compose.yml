@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # 1. On-Premises LLaMA Model Runtime via Ollama
+  ollama:
+    image: ollama/ollama:latest
+    container_name: lms_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # 2. Privacy-Preserving SearXNG Metasearch Engine
+  searxng:
+    image: searxng/searxng:latest
+    container_name: lms_searxng
+    ports:
+      - "8080:8080"
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    restart: unless-stopped
+
+  # 3. Redis Cache for SearXNG Query Aggregation
+  redis:
+    image: redis:alpine
+    container_name: lms_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # 4. MongoDB Database for User Profiles and Pathways
+  mongodb:
+    image: mongo:6.0
+    container_name: lms_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=lms_llama_db
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  # 5. Full-Stack LMS Express & React Application
+  lms_web:
+    build: .
+    container_name: lms_web_app
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - OLLAMA_ENDPOINT=http://ollama:11434
+      - OLLAMA_MODEL=llama3:8b
+      - SEARXNG_ENDPOINT=http://searxng:8080
+      - MONGODB_URI=mongodb://mongodb:27017/lms_llama_db
+      - YOUTUBE_API_KEY=""
+    depends_on:
+      - ollama
+      - searxng
+      - mongodb
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+  mongo_data:

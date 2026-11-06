@@ -1,0 +1,6 @@
+{
+  "name": "LLaMA & SearXNG LMS",
+  "description": "AI-Powered Learning Management System leveraging local LLaMA via Ollama, SearXNG metasearch, automated topic decomposition, YouTube video recommendations, and adaptive feedback loops.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
